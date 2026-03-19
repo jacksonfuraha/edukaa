@@ -62,7 +62,7 @@ public class NotificationDAO {
         try (Connection c = DBConnection.getConnection()) {
             ensureTable(c);
             try (PreparedStatement ps = c.prepareStatement(
-                    "SELECT COUNT(*) FROM notifications WHERE user_id=? AND is_read=0")) {
+                    "SELECT COUNT(*) FROM notifications WHERE user_id=? AND is_read=FALSE")) {
                 ps.setInt(1, userId);
                 ResultSet rs = ps.executeQuery();
                 return rs.next() ? rs.getInt(1) : 0;
@@ -74,7 +74,7 @@ public class NotificationDAO {
         try (Connection c = DBConnection.getConnection()) {
             ensureTable(c);
             try (PreparedStatement ps = c.prepareStatement(
-                    "UPDATE notifications SET is_read=1 WHERE user_id=?")) {
+                    "UPDATE notifications SET is_read=TRUE WHERE user_id=?")) {
                 ps.setInt(1, userId);
                 ps.executeUpdate();
             }

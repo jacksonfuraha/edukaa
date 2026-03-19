@@ -45,21 +45,14 @@ public class VideoDAO {
         }
     }
 
-    // ── Schema detection ─────────────────────────────────────────────────
+    // ── Schema detection — fixed for PostgreSQL ──────────────────────────
     private void detectSchema(Connection c) throws SQLException {
         if (schemaChecked) return;
-        try (Statement st = c.createStatement();
-             ResultSet rs = st.executeQuery("SELECT * FROM product_videos LIMIT 0")) {
-            ResultSetMetaData m = rs.getMetaData();
-            videoCol = "video_path";
-            for (int i = 1; i <= m.getColumnCount(); i++) {
-                String col = m.getColumnName(i).toLowerCase();
-                if (col.equals("video_url"))     videoCol     = "video_url";
-                if (col.equals("active"))        hasActive    = true;
-                if (col.equals("likes"))         hasLikes     = true;
-                if (col.equals("thumbnail_url")) hasThumbnail = true;
-            }
-        }
+        // PostgreSQL schema is fixed — use known column names from DBInitializer
+        videoCol     = "video_url";
+        hasActive    = true;
+        hasLikes     = true;
+        hasThumbnail = true;
         schemaChecked = true;
     }
 
@@ -69,7 +62,7 @@ public class VideoDAO {
         try (Connection c = DBConnection.getConnection()) {
             detectSchema(c);
             ensureTables(c);
-            String where = hasActive ? " WHERE pv.active=1 " : " ";
+            String where = hasActive ? " WHERE pv.active=TRUE " : " ";
             String sql = "SELECT pv.*, u.full_name AS seller_name " +
                          "FROM product_videos pv JOIN users u ON pv.seller_id=u.id" +
                          where + "ORDER BY pv.created_at DESC";

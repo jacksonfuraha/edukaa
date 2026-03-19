@@ -174,7 +174,7 @@ public class OrderDAO {
                         payRef, o.getPaymentMethod() != null ? o.getPaymentMethod() : "Mobile Money",
                         o.getDeliveryAddress(), o.getSellerName());
                     try (Connection c2 = DBConnection.getConnection();
-                         PreparedStatement ps2 = c2.prepareStatement("UPDATE orders SET payslip_sent=1 WHERE id=?")) {
+                         PreparedStatement ps2 = c2.prepareStatement("UPDATE orders SET payslip_sent=TRUE WHERE id=?")) {
                         ps2.setInt(1, orderId); ps2.executeUpdate();
                     } catch (SQLException ignored) {}
                 }

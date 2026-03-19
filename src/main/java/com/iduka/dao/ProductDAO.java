@@ -6,28 +6,16 @@ import java.util.*;
 
 public class ProductDAO {
 
-    // Detect schema once - old DB used 'is_active', new uses 'active'
-    private static String activeCol    = null;
-    private static String stockCol     = null;
-    private static String imageCol     = null;
+    // PostgreSQL-safe column names (fixed for new schema)
+    private static final String activeCol = "active";
+    private static final String stockCol  = "stock";
+    private static final String imageCol  = "image_url";
 
     private void detectSchema(Connection c) throws SQLException {
-        if (activeCol != null) return;
-        ResultSetMetaData meta;
-        try (Statement st = c.createStatement();
-             ResultSet rs = st.executeQuery("SELECT * FROM products LIMIT 0")) {
-            meta = rs.getMetaData();
-            activeCol = "active"; stockCol = "stock"; imageCol = "image_url"; // defaults
-            for (int i = 1; i <= meta.getColumnCount(); i++) {
-                String col = meta.getColumnName(i).toLowerCase();
-                if (col.equals("is_active"))      activeCol = "is_active";
-                if (col.equals("stock_quantity"))  stockCol  = "stock_quantity";
-                if (col.equals("image1"))          imageCol  = "image1";
-            }
-        }
+        // No-op: schema is fixed for PostgreSQL
     }
 
-    private String activeFilter() { return (activeCol != null ? activeCol : "active") + "=1"; }
+    private String activeFilter() { return activeCol + "=TRUE"; }
 
     public List<Product> getAllActive() throws SQLException {
         List<Product> list = new ArrayList<>();
@@ -138,7 +126,7 @@ public class ProductDAO {
     public boolean deleteProduct(int id, int sellerId) throws SQLException {
         try (Connection c = DBConnection.getConnection()) {
             detectSchema(c);
-            String sql = "UPDATE products SET " + activeCol + "=0 WHERE id=? AND seller_id=?";
+            String sql = "UPDATE products SET " + activeCol + "=FALSE WHERE id=? AND seller_id=?";
             try (PreparedStatement ps = c.prepareStatement(sql)) {
                 ps.setInt(1, id); ps.setInt(2, sellerId);
                 return ps.executeUpdate() == 1;
