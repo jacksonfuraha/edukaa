@@ -400,6 +400,22 @@ function escHtml(s) {
   if (!s) return '';
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
+// ── Refresh all comment counts on page load ────────────────────────────────
+(function refreshAllCounts() {
+  // Collect all video IDs from the page
+  var videoBtns = document.querySelectorAll('[id^="cmtcount-"]');
+  videoBtns.forEach(function(el) {
+    var videoId = el.id.replace('cmtcount-', '');
+    if (!videoId) return;
+    fetch(CTX + '/videos/comment?videoId=' + videoId, { credentials: 'same-origin' })
+      .then(function(r) { return r.json(); })
+      .then(function(list) {
+        el.textContent = list.length;
+      })
+      .catch(function() {});
+  });
+})();
 </script>
 </body>
 </html>
