@@ -20,8 +20,10 @@
     if (count > 0) {
       el.textContent = count > 99 ? '99+' : String(count);
       el.classList.remove('hidden');
+      el.style.display = 'flex';
     } else {
       el.classList.add('hidden');
+      el.style.display = 'none';
     }
   }
 
