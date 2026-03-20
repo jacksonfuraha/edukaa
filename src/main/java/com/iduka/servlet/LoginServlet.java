@@ -23,7 +23,7 @@ public class LoginServlet extends HttpServlet {
                 req.setAttribute("error", "Email address is required.");
                 req.getRequestDispatcher("/jsp/auth/login.jsp").forward(req, res); return;
             }
-            if (!email.trim().matches("^[^\s@]+@[^\s@]+\.[^\s@]+$")) {
+            if (!email.trim().matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
                 req.setAttribute("error", "Please enter a valid email address.");
                 req.getRequestDispatcher("/jsp/auth/login.jsp").forward(req, res); return;
             }
