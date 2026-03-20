@@ -2,6 +2,7 @@ package com.iduka.servlet;
 
 import com.iduka.dao.ChatDAO;
 import com.iduka.dao.NotificationDAO;
+import com.iduka.dao.OrderDAO;
 import com.iduka.model.Notification;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
@@ -13,6 +14,7 @@ import java.util.List;
 public class NotificationServlet extends HttpServlet {
     private final NotificationDAO dao     = new NotificationDAO();
     private final ChatDAO         chatDAO = new ChatDAO();
+    private final OrderDAO        orderDAO= new OrderDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
@@ -23,10 +25,12 @@ public class NotificationServlet extends HttpServlet {
 
         HttpSession session = req.getSession(false);
         if (session == null || session.getAttribute("userId") == null) {
-            out.write("{\"count\":0,\"chatCount\":0,\"items\":[]}");
+            out.write("{\"count\":0,\"chatCount\":0,\"orderCount\":0,\"items\":[]}");
             return;
         }
-        int userId = (int) session.getAttribute("userId");
+
+        int    userId = (int)    session.getAttribute("userId");
+        String role   = (String) session.getAttribute("userRole");
 
         try {
             String action = req.getParameter("action");
@@ -37,12 +41,25 @@ public class NotificationServlet extends HttpServlet {
             }
 
             List<Notification> list = dao.getUnread(userId);
+
+            // Unread chat messages
             int chatCount = 0;
             try { chatCount = chatDAO.countUnread(userId); } catch(Exception ignored){}
+
+            // Pending orders badge
+            int orderCount = 0;
+            try {
+                if ("SELLER".equals(role)) {
+                    orderCount = orderDAO.countPendingForSeller(userId);
+                } else {
+                    orderCount = orderDAO.countPendingForBuyer(userId);
+                }
+            } catch(Exception ignored){}
 
             StringBuilder sb = new StringBuilder();
             sb.append("{\"count\":").append(list.size())
               .append(",\"chatCount\":").append(chatCount)
+              .append(",\"orderCount\":").append(orderCount)
               .append(",\"items\":[");
 
             for (int i = 0; i < list.size(); i++) {
@@ -61,7 +78,7 @@ public class NotificationServlet extends HttpServlet {
 
         } catch (Exception e) {
             System.err.println("NotificationServlet error: " + e.getMessage());
-            out.write("{\"count\":0,\"chatCount\":0,\"items\":[]}");
+            out.write("{\"count\":0,\"chatCount\":0,\"orderCount\":0,\"items\":[]}");
         }
     }
 

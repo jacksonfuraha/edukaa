@@ -159,6 +159,9 @@
         /* Update chat badge */
         showBadge($('chatBadge'), chatCount);
 
+        /* Update order badge (My Shop for seller, Orders for buyer) */
+        showBadge($('orderBadge'), data.orderCount || 0);
+
         /* Update mobile bottom nav badges */
         showBadge($('mobBotChatBadge'),  chatCount);
         showBadge($('mobBotNotifBadge'), notifCount);

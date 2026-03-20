@@ -233,4 +233,29 @@ public class OrderDAO {
         }).start();
     }
 
+
+    /** Count PENDING orders for a seller (new orders needing confirmation) */
+    public int countPendingForSeller(int sellerId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM orders o " +
+                     "JOIN products p ON o.product_id=p.id " +
+                     "WHERE p.seller_id=? AND o.status='PENDING'";
+        try (Connection c = DBConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, sellerId);
+            ResultSet rs = ps.executeQuery();
+            return rs.next() ? rs.getInt(1) : 0;
+        }
+    }
+
+    /** Count orders with payment pending for a buyer */
+    public int countPendingForBuyer(int buyerId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM orders WHERE buyer_id=? AND status IN ('PENDING','CONFIRMED') AND payment_status='UNPAID'";
+        try (Connection c = DBConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, buyerId);
+            ResultSet rs = ps.executeQuery();
+            return rs.next() ? rs.getInt(1) : 0;
+        }
+    }
+
 }

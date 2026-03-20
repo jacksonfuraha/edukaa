@@ -24,10 +24,22 @@
           </a>
 
           <c:if test="${sessionScope.userRole == 'SELLER'}">
-            <a href="<%=ctx%>/seller/dashboard" class="nav-link"><i class="fas fa-store"></i> My Shop</a>
+            <a href="<%=ctx%>/seller/dashboard" class="nav-link" style="position:relative;display:inline-flex;align-items:center;gap:6px;">
+              <span style="position:relative;display:inline-flex;align-items:center;">
+                <i class="fas fa-store" style="font-size:1.15rem;"></i>
+                <span class="hdr-badge hidden" id="orderBadge">0</span>
+              </span>
+              My Shop
+            </a>
           </c:if>
           <c:if test="${sessionScope.userRole == 'BUYER'}">
-            <a href="<%=ctx%>/buyer/order" class="nav-link"><i class="fas fa-box"></i> Orders</a>
+            <a href="<%=ctx%>/buyer/order" class="nav-link" style="position:relative;display:inline-flex;align-items:center;gap:6px;">
+              <span style="position:relative;display:inline-flex;align-items:center;">
+                <i class="fas fa-box" style="font-size:1.15rem;"></i>
+                <span class="hdr-badge hidden" id="orderBadge">0</span>
+              </span>
+              Orders
+            </a>
           </c:if>
 
           <%-- NOTIFICATION BELL --%>
