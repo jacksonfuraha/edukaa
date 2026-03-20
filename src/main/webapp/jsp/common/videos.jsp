@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
+<%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
 <% String ctx = request.getContextPath(); %>
 <!DOCTYPE html>
 <html lang="en">
@@ -112,10 +113,12 @@ body.videos-body{background:#000;overflow:hidden}
     %>
     <div class="vslide" id="vslide-${st.index}" data-idx="${st.index}">
 
+      <c:set var="videoSrc" value="${fn:startsWith(video.videoUrl, 'http') ? video.videoUrl : pageContext.request.contextPath.concat('/uploads/').concat(video.videoUrl)}"/>
       <video class="vplayer" id="vplayer-${st.index}"
              preload="metadata" playsinline muted loop
-             src="${video.videoUrl.startsWith('http') ? video.videoUrl : pageContext.request.contextPath.concat('/uploads/').concat(video.videoUrl)}"
-             onclick="toggleVid(${st.index})">
+             src="${videoSrc}"
+             onclick="toggleVid(${st.index})"
+             onerror="this.parentElement.querySelector('.vplay-overlay').innerHTML='<div style=\'color:#fff;text-align:center;padding:20px\'><i class=\'fas fa-exclamation-circle\' style=\'font-size:2rem;display:block;margin-bottom:8px\'></i>Video unavailable<br><small>Please re-upload</small></div>'">
       </video>
 
       <div class="vplay-overlay">
