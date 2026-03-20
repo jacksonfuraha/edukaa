@@ -3,6 +3,7 @@ import com.iduka.model.User;
 import com.iduka.util.DBConnection;
 import org.mindrot.jbcrypt.BCrypt;
 import java.sql.*;
+import java.util.*;
 
 public class UserDAO {
 
@@ -183,4 +184,61 @@ public class UserDAO {
         try { u.setVerified(rs.getBoolean("verified")); }  catch (SQLException ignored) {}
         return u;
     }
+
+    /** Check if a National ID is already registered */
+    public boolean idNumberExists(String idNumber) throws SQLException {
+        try (Connection c = DBConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(
+                "SELECT id FROM users WHERE id_number=?")) {
+            ps.setString(1, idNumber.trim());
+            return ps.executeQuery().next();
+        }
+    }
+
+    /** Check if a TIN is already registered */
+    public boolean tinExists(String tin) throws SQLException {
+        try (Connection c = DBConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(
+                "SELECT id FROM users WHERE tin_number=?")) {
+            ps.setString(1, tin.trim());
+            return ps.executeQuery().next();
+        }
+    }
+
+    /** Get all unverified sellers for admin review */
+    public List<User> getPendingSellers() throws SQLException {
+        List<User> list = new ArrayList<>();
+        try (Connection c = DBConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(
+                "SELECT * FROM users WHERE role='SELLER' AND verified=FALSE AND active=TRUE ORDER BY created_at DESC")) {
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) list.add(map(rs));
+        }
+        return list;
+    }
+
+    /** Approve or reject a seller */
+    public void updateSellerVerification(int userId, boolean approved) throws SQLException {
+        try (Connection c = DBConnection.getConnection()) {
+            // Try with seller_status column
+            try (PreparedStatement ps = c.prepareStatement(
+                    "UPDATE users SET verified=?, active=?, seller_status=? WHERE id=?")) {
+                ps.setBoolean(1, approved);
+                ps.setBoolean(2, approved);
+                ps.setString(3, approved ? "APPROVED" : "REJECTED");
+                ps.setInt(4, userId);
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                // Fallback without seller_status
+                try (PreparedStatement ps = c.prepareStatement(
+                        "UPDATE users SET verified=?, active=? WHERE id=?")) {
+                    ps.setBoolean(1, approved);
+                    ps.setBoolean(2, approved);
+                    ps.setInt(3, userId);
+                    ps.executeUpdate();
+                }
+            }
+        }
+    }
+
 }

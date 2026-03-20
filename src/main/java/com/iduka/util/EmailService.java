@@ -289,4 +289,72 @@ public class EmailService {
         "Automated notification — do not reply to this email.</div>" +
         "</div></body></html>";
     }
+
+    /** Send approval email to seller */
+    public static void sendSellerApproved(String toEmail, String sellerName) {
+        String fromEmail = getEnv("GMAIL_USER", "");
+        if (fromEmail.isEmpty()) return;
+        new Thread(() -> {
+            try {
+                Session session = buildSession();
+                Message msg = new MimeMessage(session);
+                msg.setFrom(new InternetAddress(fromEmail, "IDUKA Marketplace"));
+                msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
+                msg.setSubject("✅ Your seller account has been approved! | IDUKA");
+                msg.setContent(buildApprovalHtml(sellerName, true, ""), "text/html; charset=utf-8");
+                Transport.send(msg);
+                System.out.println("[Email] Seller approval sent to: " + toEmail);
+            } catch (Exception e) {
+                System.err.println("[Email] Seller approval failed: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    /** Send rejection email to seller */
+    public static void sendSellerRejected(String toEmail, String sellerName, String reason) {
+        String fromEmail = getEnv("GMAIL_USER", "");
+        if (fromEmail.isEmpty()) return;
+        new Thread(() -> {
+            try {
+                Session session = buildSession();
+                Message msg = new MimeMessage(session);
+                msg.setFrom(new InternetAddress(fromEmail, "IDUKA Marketplace"));
+                msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
+                msg.setSubject("❌ Seller account application update | IDUKA");
+                msg.setContent(buildApprovalHtml(sellerName, false, reason), "text/html; charset=utf-8");
+                Transport.send(msg);
+            } catch (Exception e) {
+                System.err.println("[Email] Seller rejection email failed: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    private static String buildApprovalHtml(String name, boolean approved, String reason) {
+        String color  = approved ? "#27ae60" : "#e74c3c";
+        String icon   = approved ? "✅" : "❌";
+        String title  = approved ? "Your Seller Account is Approved!" : "Seller Application Update";
+        String body   = approved
+            ? "Congratulations! Your identity has been verified and your seller account is now <strong>active</strong>.<br><br>" +
+              "You can now:<br>• Add products to your shop<br>• Upload product videos<br>• Receive orders from buyers<br><br>" +
+              "<a href='https://iduka.onrender.com/login' style='background:" + color + ";color:#fff;padding:12px 28px;border-radius:50px;text-decoration:none;font-weight:700;display:inline-block;margin-top:8px'>Start Selling Now →</a>"
+            : "Thank you for applying to sell on IDUKA. Unfortunately, we could not verify your identity at this time.<br><br>" +
+              "<strong>Reason:</strong> " + (reason != null && !reason.isEmpty() ? reason :
+              "The documents provided could not be verified. Please ensure your National ID photo is clear and all details are correct.") +
+              "<br><br>You may re-apply with correct documents. Contact support if you have questions.";
+
+        return "<!DOCTYPE html><html><head><meta charset='UTF-8'></head><body style='font-family:Arial,sans-serif;background:#f4f4f8;padding:20px'>" +
+            "<div style='max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1)'>" +
+            "<div style='background:linear-gradient(135deg,#6c63ff,#a855f7);padding:28px;text-align:center'>" +
+            "<h1 style='color:#fff;font-size:1.8rem;margin:0'>🛍️ IDUKA</h1></div>" +
+            "<div style='background:" + color + ";padding:20px;text-align:center'>" +
+            "<div style='font-size:3rem'>" + icon + "</div>" +
+            "<h2 style='color:#fff;margin:8px 0'>" + title + "</h2></div>" +
+            "<div style='padding:32px'>" +
+            "<p style='font-size:1rem;color:#444'>Dear <strong>" + name + "</strong>,</p><br>" +
+            "<p style='font-size:.95rem;color:#444;line-height:1.7'>" + body + "</p></div>" +
+            "<div style='background:#1a1a2e;padding:20px;text-align:center;color:rgba(255,255,255,.5);font-size:.75rem'>" +
+            "<strong style='color:#a78bfa;display:block;margin-bottom:4px'>IDUKA Marketplace — Rwanda 🇷🇼</strong>" +
+            "This is an automated message.</div></div></body></html>";
+    }
+
 }
