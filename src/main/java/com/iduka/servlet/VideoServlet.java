@@ -177,16 +177,38 @@ public class VideoServlet extends HttpServlet {
                 ? origName.substring(origName.lastIndexOf('.')).toLowerCase() : ".mp4";
             if (!ext.matches("\\.(mp4|mov|avi|webm|mkv)")) ext = ".mp4";
             String fileName = UUID.randomUUID() + ext;
-            Path dir = Paths.get(UPLOAD_BASE, "videos");
-            Files.createDirectories(dir);
-            try (InputStream in = videoPart.getInputStream()) {
-                Files.copy(in, dir.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
+            String videoUrl;
+
+            if (com.iduka.util.CloudinaryConfig.isEnabled()) {
+                // Upload to Cloudinary for permanent cloud storage
+                try (InputStream in = videoPart.getInputStream()) {
+                    videoUrl = com.iduka.util.CloudinaryConfig.uploadVideo(in, fileName);
+                    System.out.println("[Video] Uploaded to Cloudinary: " + videoUrl);
+                } catch (Exception e) {
+                    System.err.println("[Video] Cloudinary upload failed: " + e.getMessage());
+                    // Fallback to local
+                    Path dir = Paths.get(UPLOAD_BASE, "videos");
+                    Files.createDirectories(dir);
+                    try (InputStream in2 = videoPart.getInputStream()) {
+                        Files.copy(in2, dir.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
+                    }
+                    videoUrl = "videos/" + fileName;
+                }
+            } else {
+                // Local storage (ephemeral on Render free tier)
+                Path dir = Paths.get(UPLOAD_BASE, "videos");
+                Files.createDirectories(dir);
+                try (InputStream in = videoPart.getInputStream()) {
+                    Files.copy(in, dir.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
+                }
+                videoUrl = "videos/" + fileName;
             }
+
             ProductVideo v = new ProductVideo();
             v.setSellerId(sellerId);
             v.setProductId(Integer.parseInt(req.getParameter("productId")));
             v.setTitle(req.getParameter("title"));
-            v.setVideoUrl("videos/" + fileName);
+            v.setVideoUrl(videoUrl);
             v.setThumbnailUrl("");
             videoDAO.addVideo(v);
             res.sendRedirect(req.getContextPath() + "/videos?success=Video+uploaded!");

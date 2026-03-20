@@ -114,7 +114,7 @@ body.videos-body{background:#000;overflow:hidden}
 
       <video class="vplayer" id="vplayer-${st.index}"
              preload="metadata" playsinline muted loop
-             src="<%=ctx%>/uploads/${video.videoUrl}"
+             src="${video.videoUrl.startsWith('http') ? video.videoUrl : pageContext.request.contextPath.concat('/uploads/').concat(video.videoUrl)}"
              onclick="toggleVid(${st.index})">
       </video>
 
