@@ -38,7 +38,7 @@ public class ProductDAO {
             detectSchema(c);
             String sql = "SELECT p.*,u.full_name as seller_name FROM products p " +
                          "JOIN users u ON p.seller_id=u.id " +
-                         "WHERE p." + activeFilter() + " AND (p.name LIKE ? OR p.description LIKE ?) " +
+                         "WHERE p." + activeFilter() + " AND (p.name ILIKE ? OR p.description ILIKE ?) " +
                          "ORDER BY p.created_at DESC";
             try (PreparedStatement ps = c.prepareStatement(sql)) {
                 String k = "%" + keyword + "%";
