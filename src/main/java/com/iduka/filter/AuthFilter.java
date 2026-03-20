@@ -28,18 +28,6 @@ public class AuthFilter implements Filter {
             res.sendRedirect(req.getContextPath() + "/home");
         } else if (uri.contains("/seller/") && !"SELLER".equals(role)) {
             res.sendRedirect(req.getContextPath() + "/home");
-        } else if (uri.contains("/seller/")) {
-            // Check if seller is verified — block unverified sellers
-            com.iduka.model.User user =
-                (com.iduka.model.User) session.getAttribute("user");
-            if (user != null && !user.isVerified()) {
-                res.sendRedirect(req.getContextPath() +
-                    "/login?error=Your+seller+account+is+pending+verification.+" +
-                    "Our+team+will+review+your+documents+within+24+hours.+" +
-                    "You+will+receive+an+email+once+approved.");
-            } else {
-                chain.doFilter(request, response);
-            }
         } else {
             chain.doFilter(request, response);
         }

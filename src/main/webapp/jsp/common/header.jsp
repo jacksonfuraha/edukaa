@@ -85,9 +85,6 @@
               ${sessionScope.userName} <i class="fas fa-caret-down"></i>
             </button>
             <div class="user-dropdown">
-              <c:if test="${sessionScope.user.id == 1}">
-                <a href="<%=ctx%>/admin/sellers" style="color:#6c63ff"><i class="fas fa-shield-alt"></i> Admin Panel</a>
-              </c:if>
               <a href="<%=ctx%>/profile"><i class="fas fa-cog"></i> Profile Settings</a>
               <a href="<%=ctx%>/logout" style="color:#e74c3c"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
