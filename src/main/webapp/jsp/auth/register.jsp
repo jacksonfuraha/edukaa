@@ -127,7 +127,7 @@
       <div class="alert alert-success"><i class="fas fa-check-circle"></i> ${param.success}</div>
     </c:if>
 
-    <form method="post" action="<%=ctx%>/register" id="registerForm" novalidate enctype="multipart/form-data" id="regForm">
+    <form method="post" action="<%=ctx%>/register" enctype="multipart/form-data" id="regForm">
 
       <%-- ① Role --%>
       <div class="form-section-title">I want to</div>
@@ -355,6 +355,5 @@ document.getElementById('regForm').addEventListener('submit', function(e) {
   document.getElementById('regBtn').disabled = true;
 });
 </script>
-<script src="<%=ctx%>/js/validate.js"></script>
 </body>
 </html>

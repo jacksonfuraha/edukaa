@@ -20,7 +20,7 @@
   <h2><i class="fas fa-video"></i> Upload Product Video</h2>
   <p class="form-hint"><i class="fas fa-info-circle"></i> Upload short videos showcasing your product (TikTok style). Buyers scroll through these videos!</p>
   <c:if test="${not empty error}"><div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> ${error}</div></c:if>
-  <form id="videoForm" novalidate method="post" action="<%=ctx%>/seller/uploadVideo" enctype="multipart/form-data" class="auth-form" id="videoForm">
+  <form method="post" action="<%=ctx%>/seller/uploadVideo" enctype="multipart/form-data" class="auth-form" id="videoForm">
     <div class="form-group">
       <label>Select Product to Showcase *</label>
       <select name="productId" required>
@@ -97,5 +97,4 @@ document.getElementById('videoForm').addEventListener('submit', function() {
     const iv = setInterval(() => { w = Math.min(w + 2, 90); document.getElementById('progressBar').style.width = w + '%'; if (w >= 90) clearInterval(iv); }, 200);
 });
 </script>
-<script src="<%=ctx%>/js/validate.js"></script>
 </body></html>

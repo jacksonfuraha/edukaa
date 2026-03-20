@@ -38,7 +38,7 @@
     <c:if test="${not empty success}">
       <div class="alert alert-success"><i class="fas fa-check-circle"></i> ${success}</div>
     </c:if>
-    <form method="post" action="<%=ctx%>/login" class="auth-form" id="loginForm" novalidate>
+    <form method="post" action="<%=ctx%>/login" class="auth-form">
       <div class="form-group">
         <label><i class="fas fa-envelope"></i> Email Address</label>
         <input type="email" name="email" placeholder="your@email.com" required autofocus>
@@ -66,6 +66,5 @@ function togglePw() {
   ic.className = f.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
 }
 </script>
-<script src="<%=ctx%>/js/validate.js"></script>
 </body>
 </html>

@@ -53,7 +53,7 @@
 
       <c:choose>
         <c:when test="${sessionScope.userRole == 'BUYER'}">
-          <form id="orderForm" novalidate method="post" action="<%=ctx%>/buyer/order" id="orderForm">
+          <form method="post" action="<%=ctx%>/buyer/order" id="orderForm">
             <input type="hidden" name="productId" value="${product.id}">
 
             <%-- Quantity --%>
@@ -143,5 +143,4 @@ function showMomo(type){
 }
 </script>
 <script src="<%=ctx%>/js/main.js"></script>
-<script src="<%=ctx%>/js/validate.js"></script>
 </body></html>

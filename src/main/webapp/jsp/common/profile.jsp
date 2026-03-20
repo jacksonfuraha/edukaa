@@ -461,6 +461,5 @@ document.getElementById('avatarModal').addEventListener('click', function(e) {
   if (e.target === this) closeAvatarModal();
 });
 </script>
-<script src="<%=ctx%>/js/validate.js"></script>
 </body>
 </html>
