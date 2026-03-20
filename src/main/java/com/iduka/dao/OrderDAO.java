@@ -23,15 +23,14 @@ public class OrderDAO {
                 }
             }
         }
-        String sql = "INSERT INTO orders(buyer_id,product_id,quantity,total_price,delivery_address,status) VALUES(?,?,?,?,?,?)";
+        String sql = "INSERT INTO orders(buyer_id,product_id,quantity,total_price,delivery_address,status) VALUES(?,?,?,?,?,?) RETURNING id";
         try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, o.getBuyerId()); ps.setInt(2, o.getProductId());
             ps.setInt(3, o.getQuantity()); ps.setBigDecimal(4, o.getTotalPrice());
             ps.setString(5, o.getDeliveryAddress()); ps.setString(6, "PENDING");
-            ps.executeUpdate();
-            trySetExtraOrderColumns(c, -1, o); // will use last insert id below
-            ResultSet keys = ps.getGeneratedKeys();
+            ResultSet keys = ps.executeQuery();
+            trySetExtraOrderColumns(c, -1, o);
             int newId = keys.next() ? keys.getInt(1) : -1;
             if (newId > 0) {
                 trySetExtraOrderColumns2(c, newId, o);

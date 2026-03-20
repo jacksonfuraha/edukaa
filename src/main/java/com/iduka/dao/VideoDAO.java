@@ -21,27 +21,32 @@ public class VideoDAO {
     // ── Ensure extra tables exist (called once) ──────────────────────────
     private void ensureTables(Connection c) {
         if (tablesCreated) return;
+        tablesCreated = true;
+        // video_likes
         try {
             c.createStatement().executeUpdate(
                 "CREATE TABLE IF NOT EXISTS video_likes (" +
-                "  id SERIAL PRIMARY KEY," +
-                "  video_id INT NOT NULL," +
-                "  user_id  INT NOT NULL," +
+                "  id         SERIAL PRIMARY KEY," +
+                "  video_id   INT NOT NULL," +
+                "  user_id    INT NOT NULL," +
                 "  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
-                "  UNIQUE KEY unique_like (video_id, user_id)" +
+                "  UNIQUE (video_id, user_id)" +
                 ")");
+        } catch (SQLException e) {
+            System.err.println("video_likes table warning: " + e.getMessage());
+        }
+        // video_comments (may already exist from DBInitializer)
+        try {
             c.createStatement().executeUpdate(
                 "CREATE TABLE IF NOT EXISTS video_comments (" +
-                "  id SERIAL PRIMARY KEY," +
-                "  video_id INT NOT NULL," +
-                "  user_id  INT NOT NULL," +
-                "  comment  TEXT NOT NULL," +
+                "  id         SERIAL PRIMARY KEY," +
+                "  video_id   INT NOT NULL," +
+                "  user_id    INT NOT NULL," +
+                "  comment    TEXT NOT NULL," +
                 "  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
                 ")");
-            tablesCreated = true;
         } catch (SQLException e) {
-            tablesCreated = true; // don't keep retrying
-            System.err.println("ensureTables warning: " + e.getMessage());
+            System.err.println("video_comments table warning: " + e.getMessage());
         }
     }
 
@@ -136,7 +141,7 @@ public class VideoDAO {
                 }
             } else {
                 try (PreparedStatement ps = c.prepareStatement(
-                        "INSERT IGNORE INTO video_likes(video_id,user_id) VALUES(?,?)")) {
+                        "INSERT INTO video_likes(video_id,user_id) VALUES(?,?) ON CONFLICT DO NOTHING")) {
                     ps.setInt(1, videoId); ps.setInt(2, userId); ps.executeUpdate();
                 }
                 if (hasLikes) try (PreparedStatement ps = c.prepareStatement(
@@ -204,11 +209,9 @@ public class VideoDAO {
         try (Connection c = DBConnection.getConnection()) {
             ensureTables(c);
             try (PreparedStatement ps = c.prepareStatement(
-                    "INSERT INTO video_comments(video_id,user_id,comment) VALUES(?,?,?)",
-                    Statement.RETURN_GENERATED_KEYS)) {
+                    "INSERT INTO video_comments(video_id,user_id,comment) VALUES(?,?,?) RETURNING id")) {
                 ps.setInt(1, videoId); ps.setInt(2, userId); ps.setString(3, text);
-                ps.executeUpdate();
-                ResultSet keys = ps.getGeneratedKeys();
+                ResultSet keys = ps.executeQuery();
                 int newId = keys.next() ? keys.getInt(1) : -1;
                 notifyComment(c, videoId, userId, text);
                 try (PreparedStatement ps2 = c.prepareStatement(
