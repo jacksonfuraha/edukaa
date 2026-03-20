@@ -27,6 +27,46 @@
 html { scroll-behavior:smooth; }
 body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); line-height:1.6; }
 
+
+/* ===== FORM VALIDATION STYLES ===== */
+.field-error {
+  color: #e74c3c;
+  font-size: .78rem;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 500;
+  animation: shake .3s ease;
+}
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  25%      { transform: translateX(-5px); }
+  75%      { transform: translateX(5px); }
+}
+.input-error {
+  border-color: #e74c3c !important;
+  background: #fff5f5 !important;
+  box-shadow: 0 0 0 3px rgba(231,76,60,.12) !important;
+}
+.input-ok {
+  border-color: #27ae60 !important;
+  background: #f0fff4 !important;
+  box-shadow: 0 0 0 3px rgba(39,174,96,.1) !important;
+}
+/* password strength bar */
+.pw-strength-wrap { margin-top: 6px; }
+.pw-strength-bar {
+  height: 4px; border-radius: 50px;
+  background: #e0e0e0; overflow: hidden;
+}
+.pw-strength-fill {
+  height: 100%; border-radius: 50px;
+  transition: width .3s, background .3s;
+  width: 0%;
+}
+.pw-strength-text { font-size: .72rem; margin-top: 3px; font-weight: 600; }
+
 /* ===== HEADER ===== */
 .main-header { background:var(--white); box-shadow:0 2px 12px rgba(0,0,0,0.08); position:sticky; top:0; z-index:1000; }
 .header-inner { max-width:1280px; margin:0 auto; padding:0 20px; height:65px; display:flex; align-items:center; gap:16px; }

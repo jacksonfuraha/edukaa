@@ -29,9 +29,23 @@ public class OrderServlet extends HttpServlet {
             throws ServletException, IOException {
         int buyerId = (int) req.getSession().getAttribute("userId");
         try {
-            int productId      = Integer.parseInt(req.getParameter("productId"));
-            int qty            = Integer.parseInt(req.getParameter("quantity"));
-            String payMethod   = req.getParameter("paymentMethod");
+            // Server-side validation
+            String qtyParam = req.getParameter("quantity");
+            String pidParam = req.getParameter("productId");
+            String payMethod = req.getParameter("paymentMethod");
+
+            if (pidParam == null || pidParam.trim().isEmpty()) {
+                res.sendRedirect(req.getContextPath() + "/home?error=Invalid+product"); return;
+            }
+            if (qtyParam == null || Integer.parseInt(qtyParam) < 1) {
+                res.sendRedirect(req.getContextPath() + "/product?id=" + pidParam + "&error=Quantity+must+be+at+least+1"); return;
+            }
+            if (payMethod == null || payMethod.trim().isEmpty()) {
+                res.sendRedirect(req.getContextPath() + "/product?id=" + pidParam + "&error=Please+select+a+payment+method"); return;
+            }
+
+            int productId      = Integer.parseInt(pidParam);
+            int qty            = Integer.parseInt(qtyParam);
             String mtnNumber   = req.getParameter("mtnNumber");
             String airtelNumber= req.getParameter("airtelNumber");
 

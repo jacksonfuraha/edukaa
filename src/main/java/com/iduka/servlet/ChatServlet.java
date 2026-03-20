@@ -32,11 +32,25 @@ public class ChatServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
         int senderId = (int) req.getSession().getAttribute("userId");
         try {
+            String message    = req.getParameter("message");
+            String receiverStr = req.getParameter("receiverId");
+            String productStr  = req.getParameter("productId");
+
+            // Validate
+            if (message == null || message.trim().isEmpty()) {
+                res.sendRedirect(req.getContextPath() + "/chat?userId=" + receiverStr + "&productId=" + productStr + "&error=Message+cannot+be+empty");
+                return;
+            }
+            if (message.trim().length() > 1000) {
+                res.sendRedirect(req.getContextPath() + "/chat?userId=" + receiverStr + "&productId=" + productStr + "&error=Message+too+long+(max+1000+characters)");
+                return;
+            }
+
             ChatMessage m = new ChatMessage();
             m.setSenderId(senderId);
-            m.setReceiverId(Integer.parseInt(req.getParameter("receiverId")));
-            m.setProductId(Integer.parseInt(req.getParameter("productId")));
-            m.setMessage(req.getParameter("message"));
+            m.setReceiverId(Integer.parseInt(receiverStr));
+            m.setProductId(Integer.parseInt(productStr));
+            m.setMessage(message.trim());
             chatDAO.sendMessage(m);
             res.sendRedirect(req.getContextPath() + "/chat?userId=" + m.getReceiverId() + "&productId=" + m.getProductId());
         } catch (Exception e) { throw new ServletException(e); }
