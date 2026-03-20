@@ -125,8 +125,7 @@ public class ProductDAO {
 
     public boolean deleteProduct(int id, int sellerId) throws SQLException {
         try (Connection c = DBConnection.getConnection()) {
-            detectSchema(c);
-            String sql = "UPDATE products SET " + activeCol + "=FALSE WHERE id=? AND seller_id=?";
+            String sql = "DELETE FROM products WHERE id=? AND seller_id=?";
             try (PreparedStatement ps = c.prepareStatement(sql)) {
                 ps.setInt(1, id); ps.setInt(2, sellerId);
                 return ps.executeUpdate() == 1;
