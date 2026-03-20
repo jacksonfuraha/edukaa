@@ -82,21 +82,32 @@ public class ChatDAO {
         List<InboxItem> list = new ArrayList<>();
         // For each conversation the user participated in (as sender OR receiver),
         // return the most recent message summary.
+        // PostgreSQL-compatible: use subquery to get last message per conversation
         String sql =
             "SELECT " +
-            "  CASE WHEN cm.sender_id=? THEN cm.receiver_id ELSE cm.sender_id END AS other_id," +
-            "  cm.product_id," +
+            "  conv.other_id," +
+            "  conv.product_id," +
             "  u.full_name  AS other_name," +
             "  p.name       AS product_name," +
-            "  cm.message   AS last_message," +
-            "  cm.sent_at   AS last_time," +
-            "  SUM(CASE WHEN cm.receiver_id=? AND cm.is_seen IS NOT TRUE THEN 1 ELSE 0 END) AS unread_count " +
-            "FROM chat_messages cm " +
-            "JOIN users u ON u.id = CASE WHEN cm.sender_id=? THEN cm.receiver_id ELSE cm.sender_id END " +
-            "LEFT JOIN products p ON p.id = cm.product_id " +
-            "WHERE cm.sender_id=? OR cm.receiver_id=? " +
-            "GROUP BY other_id, cm.product_id " +
-            "ORDER BY last_time DESC";
+            "  conv.last_message," +
+            "  conv.last_time," +
+            "  conv.unread_count " +
+            "FROM (" +
+            "  SELECT " +
+            "    CASE WHEN cm.sender_id=? THEN cm.receiver_id ELSE cm.sender_id END AS other_id," +
+            "    cm.product_id," +
+            "    MAX(cm.message)  AS last_message," +
+            "    MAX(cm.sent_at)  AS last_time," +
+            "    SUM(CASE WHEN cm.receiver_id=? AND cm.is_seen IS NOT TRUE THEN 1 ELSE 0 END) AS unread_count " +
+            "  FROM chat_messages cm " +
+            "  WHERE cm.sender_id=? OR cm.receiver_id=? " +
+            "  GROUP BY " +
+            "    CASE WHEN cm.sender_id=? THEN cm.receiver_id ELSE cm.sender_id END," +
+            "    cm.product_id" +
+            ") conv " +
+            "JOIN users u ON u.id = conv.other_id " +
+            "LEFT JOIN products p ON p.id = conv.product_id " +
+            "ORDER BY conv.last_time DESC";
         try (Connection c = DBConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, userId); ps.setInt(2, userId);
