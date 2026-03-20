@@ -68,7 +68,9 @@ public class VideoDAO {
             detectSchema(c);
             ensureTables(c);
             String where = hasActive ? " WHERE pv.active=TRUE " : " ";
-            String sql = "SELECT pv.*, u.full_name AS seller_name " +
+            String sql = "SELECT pv.*, u.full_name AS seller_name, " +
+                         "(SELECT COUNT(*) FROM video_comments vc WHERE vc.video_id=pv.id) AS comment_count, " +
+                         "(SELECT COUNT(*) FROM video_likes vl WHERE vl.video_id=pv.id) AS like_count " +
                          "FROM product_videos pv JOIN users u ON pv.seller_id=u.id" +
                          where + "ORDER BY pv.created_at DESC";
             try (PreparedStatement ps = c.prepareStatement(sql);
@@ -278,6 +280,8 @@ public class VideoDAO {
             try { v.setVideoUrl(rs.getString("video_path")); } catch (SQLException ignored) {} }
         try { v.setThumbnailUrl(rs.getString("thumbnail_url")); } catch (SQLException ignored) {}
         try { v.setLikes(rs.getInt("likes")); }                catch (SQLException ignored) {}
+        // Prefer subquery like_count over stored likes column for accuracy
+        try { int lc = rs.getInt("like_count"); if (lc > 0 || v.getLikes() == 0) v.setLikes(lc); } catch (SQLException ignored) {}
         try { v.setCommentCount(rs.getInt("comment_count")); } catch (SQLException ignored) {}
         return v;
     }
