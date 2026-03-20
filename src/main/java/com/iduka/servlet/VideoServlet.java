@@ -10,7 +10,7 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 
-@WebServlet(urlPatterns = {"/videos", "/seller/uploadVideo", "/videos/like", "/videos/comment"})
+@WebServlet(urlPatterns = {"/videos", "/seller/uploadVideo", "/videos/like", "/videos/comment", "/seller/deleteVideo"})
 @MultipartConfig(maxFileSize = 104857600, maxRequestSize = 110100480)
 public class VideoServlet extends HttpServlet {
 
@@ -134,6 +134,16 @@ public class VideoServlet extends HttpServlet {
         // POST to /seller/uploadVideo — upload new video
         if ("/seller/uploadVideo".equals(path)) {
             uploadVideo(req, res); return;
+        }
+        // POST to /seller/deleteVideo — delete a video
+        if ("/seller/deleteVideo".equals(path)) {
+            int sellerId = (int) req.getSession().getAttribute("userId");
+            int videoId  = Integer.parseInt(req.getParameter("videoId"));
+            try {
+                videoDAO.deleteVideo(videoId, sellerId);
+                res.sendRedirect(req.getContextPath() + "/seller/dashboard?success=Video+deleted");
+            } catch (Exception e) { throw new ServletException(e); }
+            return;
         }
     }
 

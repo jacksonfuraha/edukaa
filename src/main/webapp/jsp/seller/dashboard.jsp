@@ -185,7 +185,14 @@
             <c:forEach var="vid" items="${myVideos}">
             <div style="background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.07);overflow:hidden">
               <div style="background:#111;height:140px;display:flex;align-items:center;justify-content:center;position:relative">
-                <video src="<%=ctx%>/uploads/${vid.videoUrl}" style="width:100%;height:140px;object-fit:cover" preload="none"></video>
+                <c:choose>
+                  <c:when test="${fn:startsWith(vid.videoUrl, 'http')}">
+                    <video src="${vid.videoUrl}" style="width:100%;height:140px;object-fit:cover" preload="none"></video>
+                  </c:when>
+                  <c:otherwise>
+                    <video src="<%=ctx%>/uploads/${vid.videoUrl}" style="width:100%;height:140px;object-fit:cover" preload="none"></video>
+                  </c:otherwise>
+                </c:choose>
                 <a href="<%=ctx%>/videos" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:2rem;background:rgba(0,0,0,.3);text-decoration:none">
                   <i class="fas fa-play-circle"></i>
                 </a>
@@ -200,10 +207,20 @@
                     <i class="fas fa-comment-dots"></i> ${vid.commentCount}
                   </span>
                 </div>
-                <button onclick="loadVideoComments(${vid.id},'${vid.title}')"
-                        style="width:100%;background:#f5f3ff;border:1px solid #d8b4fe;border-radius:8px;padding:7px;cursor:pointer;color:#6c63ff;font-size:.82rem;font-weight:600">
-                  <i class="fas fa-comments"></i> View Comments
-                </button>
+                <div style="display:flex;gap:8px">
+                  <button onclick="loadVideoComments(${vid.id},'${vid.title}')"
+                          style="flex:1;background:#f5f3ff;border:1px solid #d8b4fe;border-radius:8px;padding:7px;cursor:pointer;color:#6c63ff;font-size:.82rem;font-weight:600">
+                    <i class="fas fa-comments"></i> Comments
+                  </button>
+                  <form method="post" action="<%=ctx%>/seller/deleteVideo" style="margin:0"
+                        onsubmit="return confirm('Delete this video permanently?')">
+                    <input type="hidden" name="videoId" value="${vid.id}">
+                    <button type="submit"
+                            style="background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:7px 10px;cursor:pointer;color:#dc2626;font-size:.82rem">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </form>
+                </div>
               </div>
             </div>
             </c:forEach>

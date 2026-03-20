@@ -285,4 +285,14 @@ public class VideoDAO {
         try { v.setCommentCount(rs.getInt("comment_count")); } catch (SQLException ignored) {}
         return v;
     }
+
+    public boolean deleteVideo(int videoId, int sellerId) throws SQLException {
+        try (Connection c = DBConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(
+                "DELETE FROM product_videos WHERE id=? AND seller_id=?")) {
+            ps.setInt(1, videoId); ps.setInt(2, sellerId);
+            return ps.executeUpdate() == 1;
+        }
+    }
+
 }
