@@ -1,4 +1,5 @@
 package com.iduka.dao;
+// v2.0 - PostgreSQL fix - no GROUP BY
 import com.iduka.model.ChatMessage;
 import com.iduka.model.InboxItem;
 import com.iduka.util.DBConnection;
