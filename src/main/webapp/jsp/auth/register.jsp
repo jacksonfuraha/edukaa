@@ -127,7 +127,7 @@
       <div class="alert alert-success"><i class="fas fa-check-circle"></i> ${param.success}</div>
     </c:if>
 
-    <form method="post" action="<%=ctx%>/register" enctype="multipart/form-data" id="regForm">
+    <form method="post" action="<%=ctx%>/register" id="registerForm" novalidate enctype="multipart/form-data" id="regForm">
 
       <%-- ① Role --%>
       <div class="form-section-title">I want to</div>
@@ -197,32 +197,71 @@
         <h4><i class="fas fa-shield-alt"></i> Seller Verification — Required</h4>
         <div class="seller-note">
           <i class="fas fa-info-circle" style="margin-top:2px;flex-shrink:0"></i>
-          To protect buyers from scams, all sellers must verify their identity with a National ID and TIN number.
-          Your details are securely stored and never shared publicly.
+          <div>
+            To protect buyers, all sellers <strong>must verify their identity</strong>.
+            Your account will be reviewed by our team before you can start selling.
+            Make sure all details match your official ID card exactly.
+          </div>
         </div>
+
+        <%-- Warning box --%>
+        <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:.84rem;color:#856404;display:flex;gap:10px;align-items:flex-start">
+          <i class="fas fa-exclamation-triangle" style="margin-top:2px;flex-shrink:0;font-size:1rem"></i>
+          <div>
+            <strong>Warning:</strong> Providing fake, stolen, or incorrect identity documents is a criminal offense under Rwanda law.
+            Anyone found providing false information will be <strong>permanently banned</strong> and reported to authorities.
+          </div>
+        </div>
+
         <div class="form-row">
           <div class="form-group">
-            <label><i class="fas fa-id-card"></i> National ID Number *</label>
+            <label><i class="fas fa-id-card"></i> National ID Number (Indangamuntu) *</label>
             <input type="text" name="idNumber" id="idNumberInput"
-                   placeholder="e.g. 1200780000000" maxlength="16" pattern="[0-9]{16}">
-            <small style="color:#888;font-size:.75rem">16-digit Rwandan national ID</small>
+                   placeholder="e.g. 1199080012345678" maxlength="16"
+                   oninput="validateIdNumber(this)" autocomplete="off">
+            <div id="idNumberFeedback" style="font-size:.76rem;margin-top:4px;min-height:16px"></div>
+            <small style="color:#888;font-size:.75rem">
+              <i class="fas fa-info-circle"></i> Exactly 16 digits — found on your Rwandan National ID card
+            </small>
           </div>
           <div class="form-group">
             <label><i class="fas fa-building"></i> TIN Number *</label>
             <input type="text" name="tinNumber" id="tinNumberInput"
-                   placeholder="e.g. 123456789" maxlength="12">
-            <small style="color:#888;font-size:.75rem">Rwanda Revenue Authority TIN</small>
+                   placeholder="e.g. 101234567" maxlength="9"
+                   oninput="validateTIN(this)" autocomplete="off">
+            <div id="tinFeedback" style="font-size:.76rem;margin-top:4px;min-height:16px"></div>
+            <small style="color:#888;font-size:.75rem">
+              <i class="fas fa-info-circle"></i> 9-digit TIN from Rwanda Revenue Authority (RRA)
+            </small>
           </div>
         </div>
+
         <div class="form-group">
-          <label><i class="fas fa-camera"></i> National ID Card Photo *</label>
-          <div class="id-upload-zone" onclick="document.getElementById('idCardInput').click()">
+          <label><i class="fas fa-camera"></i> National ID Card Photo * <span style="color:#e74c3c;font-size:.8rem">(MANDATORY)</span></label>
+          <div class="id-upload-zone" id="idUploadZone" onclick="document.getElementById('idCardInput').click()">
             <i class="fas fa-cloud-upload-alt"></i>
-            <span id="idCardLabel">Click to upload front of your ID card (JPG, PNG, max 5MB)</span>
+            <span id="idCardLabel">Click to upload a clear photo of your ID card front (JPG, PNG, max 5MB)</span>
+            <small style="color:#a78bfa;display:block;margin-top:4px">Make sure all text is clearly readable</small>
           </div>
-          <input type="file" name="idCard" id="idCardInput" accept="image/*"
+          <input type="file" name="idCard" id="idCardInput" accept="image/jpeg,image/png,image/webp"
                  style="display:none" onchange="previewIdCard(this)">
+          <div id="idCardError" style="color:#e74c3c;font-size:.78rem;margin-top:4px;display:none">
+            <i class="fas fa-exclamation-circle"></i> ID card photo is required
+          </div>
           <img id="idCardPreview" class="id-preview" alt="ID Card Preview">
+          <div id="idCardTips" style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 12px;margin-top:8px;font-size:.78rem;color:#0369a1">
+            <strong>📸 Tips for a good ID photo:</strong><br>
+            • Place your ID on a flat surface with good lighting<br>
+            • Make sure the photo is not blurry<br>
+            • All 16 digits must be visible and readable<br>
+            • No part of the ID should be covered
+          </div>
+        </div>
+
+        <div style="background:#dcfce7;border:1px solid #86efac;border-radius:10px;padding:12px 16px;font-size:.82rem;color:#166534">
+          <i class="fas fa-clock"></i> <strong>Review Process:</strong>
+          After registration, our team will verify your documents within <strong>24 hours</strong>.
+          You will receive an email notification once your account is approved.
         </div>
       </div>
 
@@ -285,6 +324,68 @@ function switchRole(role) {
   }
 }
 
+// ── Rwanda National ID real-time validation ───────────────────────────
+function validateIdNumber(input) {
+  var val = input.value.replace(/\D/g, ''); // digits only
+  input.value = val; // auto-remove non-digits
+  var fb = document.getElementById('idNumberFeedback');
+
+  if (!val) { fb.innerHTML = ''; input.style.borderColor = ''; return; }
+
+  if (val.length < 16) {
+    fb.innerHTML = '<span style="color:#f39c12"><i class="fas fa-spinner"></i> ' + val.length + '/16 digits entered...</span>';
+    input.style.borderColor = '#f39c12';
+    return;
+  }
+  if (val.length > 16) {
+    input.value = val.substring(0, 16);
+    val = input.value;
+  }
+
+  // Validate format
+  if (!val.startsWith('1')) {
+    fb.innerHTML = '<span style="color:#e74c3c"><i class="fas fa-times-circle"></i> Invalid ID — Rwanda IDs start with 1</span>';
+    input.style.borderColor = '#e74c3c'; return;
+  }
+  var year = parseInt(val.substring(1, 5));
+  if (year < 1900 || year > 2010) {
+    fb.innerHTML = '<span style="color:#e74c3c"><i class="fas fa-times-circle"></i> Invalid ID — birth year ' + year + ' is not valid</span>';
+    input.style.borderColor = '#e74c3c'; return;
+  }
+  var age = new Date().getFullYear() - year;
+  if (age < 18) {
+    fb.innerHTML = '<span style="color:#e74c3c"><i class="fas fa-times-circle"></i> You must be at least 18 years old to sell on IDUKA</span>';
+    input.style.borderColor = '#e74c3c'; return;
+  }
+
+  fb.innerHTML = '<span style="color:#27ae60"><i class="fas fa-check-circle"></i> Valid National ID format ✓</span>';
+  input.style.borderColor = '#27ae60';
+}
+
+// ── Rwanda TIN real-time validation ──────────────────────────────────
+function validateTIN(input) {
+  var val = input.value.replace(/\D/g, '');
+  input.value = val;
+  var fb = document.getElementById('tinFeedback');
+
+  if (!val) { fb.innerHTML = ''; input.style.borderColor = ''; return; }
+
+  if (val.length < 9) {
+    fb.innerHTML = '<span style="color:#f39c12"><i class="fas fa-spinner"></i> ' + val.length + '/9 digits entered...</span>';
+    input.style.borderColor = '#f39c12'; return;
+  }
+  if (val.length > 9) { input.value = val.substring(0, 9); val = input.value; }
+
+  var first = parseInt(val[0]);
+  if (first < 1 || first > 7) {
+    fb.innerHTML = '<span style="color:#e74c3c"><i class="fas fa-times-circle"></i> Invalid TIN — must start with digits 1-7</span>';
+    input.style.borderColor = '#e74c3c'; return;
+  }
+
+  fb.innerHTML = '<span style="color:#27ae60"><i class="fas fa-check-circle"></i> Valid TIN format ✓</span>';
+  input.style.borderColor = '#27ae60';
+}
+
 
 
 // ── Password ──────────────────────────────────────────────────────────
@@ -343,6 +444,9 @@ function previewIdCard(input) {
 document.getElementById('regForm').addEventListener('submit', function(e) {
   var n = document.getElementById('regPw').value;
   var c = document.getElementById('confPw').value;
+  var role = document.querySelector('[name="role"]:checked');
+  var ok = true;
+
   if (n !== c) {
     e.preventDefault();
     document.getElementById('matchMsg').innerHTML =
@@ -350,10 +454,41 @@ document.getElementById('regForm').addEventListener('submit', function(e) {
     document.getElementById('confPw').focus();
     return;
   }
-  document.getElementById('regBtn').innerHTML =
-    '<i class="fas fa-spinner fa-spin"></i> Creating account…';
-  document.getElementById('regBtn').disabled = true;
+
+  // Seller-specific validation on submit
+  if (role && role.value === 'SELLER') {
+    var idVal  = document.getElementById('idNumberInput').value.replace(/\D/g,'');
+    var tinVal = document.getElementById('tinNumberInput').value.replace(/\D/g,'');
+    var idCard = document.getElementById('idCardInput');
+
+    if (idVal.length !== 16) {
+      e.preventDefault();
+      document.getElementById('idNumberFeedback').innerHTML =
+        '<span style="color:#e74c3c"><i class="fas fa-times-circle"></i> National ID must be exactly 16 digits</span>';
+      document.getElementById('idNumberInput').focus();
+      ok = false;
+    } else if (tinVal.length !== 9) {
+      e.preventDefault();
+      document.getElementById('tinFeedback').innerHTML =
+        '<span style="color:#e74c3c"><i class="fas fa-times-circle"></i> TIN must be exactly 9 digits</span>';
+      document.getElementById('tinNumberInput').focus();
+      ok = false;
+    } else if (!idCard.files || idCard.files.length === 0) {
+      e.preventDefault();
+      document.getElementById('idCardError').style.display = 'block';
+      document.getElementById('idUploadZone').style.borderColor = '#e74c3c';
+      document.getElementById('idUploadZone').scrollIntoView({behavior:'smooth'});
+      ok = false;
+    }
+  }
+
+  if (ok) {
+    document.getElementById('regBtn').innerHTML =
+      '<i class="fas fa-spinner fa-spin"></i> Creating account…';
+    document.getElementById('regBtn').disabled = true;
+  }
 });
 </script>
+<script src="<%=ctx%>/js/validate.js"></script>
 </body>
 </html>

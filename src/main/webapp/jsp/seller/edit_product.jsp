@@ -60,7 +60,7 @@
         </button>
       </div>
 
-      <form method="post" action="<%=ctx%>/seller/editProduct" enctype="multipart/form-data" id="editForm">
+      <form id="editProductForm" novalidate method="post" action="<%=ctx%>/seller/editProduct" enctype="multipart/form-data" id="editForm">
         <input type="hidden" name="id" value="${product.id}">
         <input type="file" name="image" id="imgInput" accept="image/*" style="display:none"
                onchange="previewImg(this)">
@@ -134,4 +134,5 @@ document.getElementById('activeToggle').addEventListener('change', function(){
   document.getElementById('activeLabel').style.color = this.checked ? '#27ae60' : '#e74c3c';
 });
 </script>
+<script src="<%=ctx%>/js/validate.js"></script>
 </body></html>

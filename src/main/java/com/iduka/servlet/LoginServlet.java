@@ -18,6 +18,19 @@ public class LoginServlet extends HttpServlet {
         String email=req.getParameter("email");
         String password=req.getParameter("password");
         try {
+            // Server-side validation
+            if (email == null || email.trim().isEmpty()) {
+                req.setAttribute("error", "Email address is required.");
+                req.getRequestDispatcher("/jsp/auth/login.jsp").forward(req, res); return;
+            }
+            if (!email.trim().matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+                req.setAttribute("error", "Please enter a valid email address.");
+                req.getRequestDispatcher("/jsp/auth/login.jsp").forward(req, res); return;
+            }
+            if (password == null || password.isEmpty()) {
+                req.setAttribute("error", "Password is required.");
+                req.getRequestDispatcher("/jsp/auth/login.jsp").forward(req, res); return;
+            }
             User u=userDAO.login(email, password);
             if(u!=null){
                 HttpSession session=req.getSession(true);

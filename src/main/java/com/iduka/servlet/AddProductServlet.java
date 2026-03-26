@@ -57,13 +57,40 @@ public class AddProductServlet extends HttpServlet {
                 }
             }
 
+            // Server-side validation
+            String name  = req.getParameter("name");
+            String price = req.getParameter("price");
+            String stock = req.getParameter("stock");
+            String catId = req.getParameter("categoryId");
+
+            if (name == null || name.trim().isEmpty()) {
+                req.setAttribute("error", "Product name is required.");
+                req.setAttribute("categories", categoryDAO.getAll());
+                req.getRequestDispatcher("/jsp/seller/add_product.jsp").forward(req, res); return;
+            }
+            if (price == null || price.trim().isEmpty() || Double.parseDouble(price) <= 0) {
+                req.setAttribute("error", "Please enter a valid price greater than 0.");
+                req.setAttribute("categories", categoryDAO.getAll());
+                req.getRequestDispatcher("/jsp/seller/add_product.jsp").forward(req, res); return;
+            }
+            if (stock == null || stock.trim().isEmpty() || Integer.parseInt(stock) < 0) {
+                req.setAttribute("error", "Stock quantity cannot be negative.");
+                req.setAttribute("categories", categoryDAO.getAll());
+                req.getRequestDispatcher("/jsp/seller/add_product.jsp").forward(req, res); return;
+            }
+            if (catId == null || catId.trim().isEmpty()) {
+                req.setAttribute("error", "Please select a category.");
+                req.setAttribute("categories", categoryDAO.getAll());
+                req.getRequestDispatcher("/jsp/seller/add_product.jsp").forward(req, res); return;
+            }
+
             Product p = new Product();
             p.setSellerId(sellerId);
-            p.setCategoryId(Integer.parseInt(req.getParameter("categoryId")));
-            p.setName(req.getParameter("name"));
+            p.setCategoryId(Integer.parseInt(catId));
+            p.setName(name.trim());
             p.setDescription(req.getParameter("description"));
-            p.setPrice(new BigDecimal(req.getParameter("price")));
-            p.setStock(Integer.parseInt(req.getParameter("stock")));
+            p.setPrice(new BigDecimal(price));
+            p.setStock(Integer.parseInt(stock));
             p.setImageUrl(imageUrl);
             productDAO.addProduct(p);
             res.sendRedirect(req.getContextPath() + "/seller/dashboard?success=Product+added!");

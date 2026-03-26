@@ -1,7 +1,9 @@
 package com.iduka.servlet;
 
+import com.iduka.dao.NotificationDAO;
 import com.iduka.dao.UserDAO;
 import com.iduka.model.User;
+import com.iduka.util.RwandaValidator;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
@@ -14,7 +16,9 @@ import java.util.UUID;
 @MultipartConfig(maxFileSize = 5242880)
 public class RegisterServlet extends HttpServlet {
 
-    private final UserDAO userDAO = new UserDAO();
+    private final UserDAO         userDAO  = new UserDAO();
+    private final NotificationDAO notifDAO = new NotificationDAO();
+
     private static final String UPLOAD_BASE =
         com.iduka.util.UploadConfig.getUploadBase();
 
@@ -27,85 +31,185 @@ public class RegisterServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse res)
             throws ServletException, IOException {
-        String fullName = req.getParameter("fullName");
-        String email    = req.getParameter("email");
-        String phone    = req.getParameter("phone");
+
+        String fullName = clean(req.getParameter("fullName"));
+        String email    = clean(req.getParameter("email"));
+        String phone    = clean(req.getParameter("phone"));
         String password = req.getParameter("password");
         String confirm  = req.getParameter("confirmPassword");
-        String role     = req.getParameter("role");
+        String role     = clean(req.getParameter("role"));
 
-        if (fullName==null||email==null||password==null||role==null
-                ||fullName.isBlank()||email.isBlank()||password.isBlank()) {
-            req.setAttribute("error","Please fill all required fields.");
-            req.getRequestDispatcher("/jsp/auth/register.jsp").forward(req,res); return;
+        // ── Basic field validation ────────────────────────────────────────
+        if (fullName.isEmpty() || email.isEmpty() || password == null || role.isEmpty()) {
+            error(req, res, "Please fill in all required fields."); return;
         }
-        if (!password.equals(confirm)) {
-            req.setAttribute("error","Passwords do not match.");
-            req.getRequestDispatcher("/jsp/auth/register.jsp").forward(req,res); return;
+        if (!email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+            error(req, res, "Please enter a valid email address."); return;
         }
         if (password.length() < 6) {
-            req.setAttribute("error","Password must be at least 6 characters.");
-            req.getRequestDispatcher("/jsp/auth/register.jsp").forward(req,res); return;
+            error(req, res, "Password must be at least 6 characters."); return;
         }
-        // Seller-specific validation
-        if ("SELLER".equals(role)) {
-            String idNum = req.getParameter("idNumber");
-            String tin   = req.getParameter("tinNumber");
-            if (idNum==null||idNum.isBlank()||tin==null||tin.isBlank()) {
-                req.setAttribute("error","Sellers must provide their National ID number and TIN number.");
-                req.getRequestDispatcher("/jsp/auth/register.jsp").forward(req,res); return;
-            }
+        if (!password.equals(confirm)) {
+            error(req, res, "Passwords do not match."); return;
+        }
+        if (phone != null && !phone.isEmpty() &&
+            !phone.replaceAll("[\\s\\-]","").matches("(07[2-9]\\d{7}|250\\d{9})")) {
+            error(req, res, "Please enter a valid Rwanda phone number (e.g. 0781234567)."); return;
         }
 
         try {
+            // ── Check email duplicate ─────────────────────────────────────
             if (userDAO.emailExists(email)) {
-                req.setAttribute("error","This email is already registered.");
-                req.getRequestDispatcher("/jsp/auth/register.jsp").forward(req,res); return;
+                error(req, res, "This email address is already registered. Please login instead."); return;
             }
+
+            // ── Seller-specific validation ────────────────────────────────
+            String idNumber = null;
+            String tinNumber = null;
+
+            if ("SELLER".equals(role)) {
+                idNumber  = clean(req.getParameter("idNumber")).replaceAll("\\s+", "");
+                tinNumber = clean(req.getParameter("tinNumber")).replaceAll("\\s+", "");
+
+                // Validate full name for sellers
+                String nameErr = RwandaValidator.validateSellerName(fullName);
+                if (nameErr != null) { error(req, res, nameErr); return; }
+
+                // Validate National ID format
+                String idErr = RwandaValidator.validateNationalId(idNumber);
+                if (idErr != null) { error(req, res, idErr); return; }
+
+                // Validate TIN format
+                String tinErr = RwandaValidator.validateTIN(tinNumber);
+                if (tinErr != null) { error(req, res, tinErr); return; }
+
+                // Check if National ID already used by another account
+                if (userDAO.idNumberExists(idNumber)) {
+                    error(req, res,
+                        "This National ID (" + idNumber + ") is already registered to another account. " +
+                        "If this is your ID, please contact support."); return;
+                }
+
+                // Check if TIN already used by another account
+                if (userDAO.tinExists(tinNumber)) {
+                    error(req, res,
+                        "This TIN number (" + tinNumber + ") is already registered to another business. " +
+                        "Each TIN can only be used once."); return;
+                }
+
+                // ID card photo is MANDATORY for sellers
+                Part idCardPart = req.getPart("idCard");
+                if (idCardPart == null || idCardPart.getSize() == 0) {
+                    error(req, res,
+                        "You must upload a photo of your National ID card. " +
+                        "This is required to verify your identity before you can sell."); return;
+                }
+
+                // Validate file type
+                String origName = idCardPart.getSubmittedFileName();
+                if (origName == null || !origName.toLowerCase().matches(".*\\.(jpg|jpeg|png|webp)$")) {
+                    error(req, res, "ID card photo must be a JPG or PNG image file."); return;
+                }
+
+                // File size check (max 5MB)
+                if (idCardPart.getSize() > 5 * 1024 * 1024) {
+                    error(req, res, "ID card photo is too large. Maximum size is 5MB."); return;
+                }
+            }
+
+            // ── Create user account ───────────────────────────────────────
             User u = new User();
             u.setFullName(fullName); u.setEmail(email); u.setPhone(phone);
             u.setPassword(password); u.setRole(role);
-            u.setCountry(req.getParameter("country"));
-            u.setProvince(req.getParameter("province"));
-            u.setDistrict(req.getParameter("district"));
-            u.setSector(req.getParameter("sector"));
-            u.setCell(req.getParameter("cell"));
-            u.setVillage(req.getParameter("village"));
+            u.setCountry(clean(req.getParameter("country")));
+            u.setProvince(clean(req.getParameter("province")));
+            u.setDistrict(clean(req.getParameter("district")));
+            u.setSector(clean(req.getParameter("sector")));
+            u.setCell(clean(req.getParameter("cell")));
+            u.setVillage(clean(req.getParameter("village")));
+
             if ("SELLER".equals(role)) {
-                u.setIdNumber(req.getParameter("idNumber"));
-                u.setTinNumber(req.getParameter("tinNumber"));
-            }
-            boolean ok = userDAO.register(u);
-            if (!ok) {
-                req.setAttribute("error","Registration failed. Please try again.");
-                req.getRequestDispatcher("/jsp/auth/register.jsp").forward(req,res); return;
+                u.setIdNumber(idNumber);
+                u.setTinNumber(tinNumber);
+                u.setVerified(false); // Requires admin approval
             }
 
-            // Upload ID card photo for sellers
+            boolean ok = userDAO.register(u);
+            if (!ok) {
+                error(req, res, "Registration failed. Please try again."); return;
+            }
+
+            // ── Upload ID card photo ──────────────────────────────────────
             if ("SELLER".equals(role)) {
                 try {
                     Part idCardPart = req.getPart("idCard");
                     if (idCardPart != null && idCardPart.getSize() > 0) {
-                        String ext = ".jpg";
                         String orig = idCardPart.getSubmittedFileName();
-                        if (orig != null && orig.contains("."))
-                            ext = orig.substring(orig.lastIndexOf('.')).toLowerCase();
+                        String ext  = orig.substring(orig.lastIndexOf('.')).toLowerCase();
                         String fileName = "idcard_" + UUID.randomUUID() + ext;
-                        Path dir = Paths.get(UPLOAD_BASE, "avatars");
-                        Files.createDirectories(dir);
-                        try (InputStream in = idCardPart.getInputStream()) {
-                            Files.copy(in, dir.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
+
+                        // Try Cloudinary first for permanent storage
+                        String idCardUrl;
+                        if (com.iduka.util.CloudinaryConfig.isEnabled()) {
+                            try (InputStream in = idCardPart.getInputStream()) {
+                                idCardUrl = com.iduka.util.CloudinaryConfig.uploadImage(in, fileName);
+                            } catch (Exception e) {
+                                // Fallback to local
+                                Path dir = Paths.get(UPLOAD_BASE, "avatars");
+                                Files.createDirectories(dir);
+                                try (InputStream in = idCardPart.getInputStream()) {
+                                    Files.copy(in, dir.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
+                                }
+                                idCardUrl = "avatars/" + fileName;
+                            }
+                        } else {
+                            Path dir = Paths.get(UPLOAD_BASE, "avatars");
+                            Files.createDirectories(dir);
+                            try (InputStream in = idCardPart.getInputStream()) {
+                                Files.copy(in, dir.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
+                            }
+                            idCardUrl = "avatars/" + fileName;
                         }
-                        // Get the newly registered user's ID and save card
+
                         User registered = userDAO.login(email, password);
                         if (registered != null) {
-                            userDAO.updateIdCard(registered.getId(), "avatars/" + fileName);
+                            userDAO.updateIdCard(registered.getId(), idCardUrl);
                         }
                     }
+                } catch (Exception e) {
+                    System.err.println("ID card upload failed: " + e.getMessage());
+                }
+
+                // Notify admin about new seller pending review
+                try {
+                    // Find admin accounts and notify them
+                    notifDAO.create(1, "ORDER",
+                        "🆕 New seller registration pending review: " + fullName +
+                        " (ID: " + idNumber + ", TIN: " + tinNumber + ")",
+                        "/admin/sellers");
                 } catch (Exception ignored) {}
+
+                res.sendRedirect(req.getContextPath() +
+                    "/login?success=Account+created!+" +
+                    "Your+seller+account+is+pending+verification.+" +
+                    "You+will+be+notified+once+approved+by+our+team.");
+            } else {
+                res.sendRedirect(req.getContextPath() +
+                    "/login?success=Account+created!+Please+login.");
             }
 
-            res.sendRedirect(req.getContextPath()+"/login?success=Account+created!+Please+login.");
-        } catch (Exception e) { throw new ServletException(e); }
+        } catch (Exception e) {
+            throw new ServletException(e);
+        }
+    }
+
+    private void error(HttpServletRequest req, HttpServletResponse res, String msg)
+            throws ServletException, IOException {
+        req.setAttribute("error", msg);
+        req.getRequestDispatcher("/jsp/auth/register.jsp").forward(req, res);
+    }
+
+    private String clean(String s) {
+        return s != null ? s.trim() : "";
     }
 }

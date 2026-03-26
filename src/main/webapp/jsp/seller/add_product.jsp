@@ -19,7 +19,7 @@
 <div class="container mt-4"><div class="form-card">
   <h2><i class="fas fa-plus-circle"></i> Add New Product</h2>
   <c:if test="${not empty error}"><div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> ${error}</div></c:if>
-  <form method="post" action="<%=ctx%>/seller/addProduct" enctype="multipart/form-data" class="auth-form" id="productForm">
+  <form method="post" action="<%=ctx%>/seller/addProduct" enctype="multipart/form-data" class="auth-form" id="productForm" novalidate>
     <div class="form-row">
       <div class="form-group">
         <label>Product Name *</label>
@@ -111,4 +111,5 @@ document.getElementById('productForm').addEventListener('submit', function() {
     document.getElementById('submitBtn').disabled = true;
 });
 </script>
+<script src="<%=ctx%>/js/validate.js"></script>
 </body></html>
