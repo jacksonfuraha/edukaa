@@ -39,8 +39,7 @@ public class DBInitializer implements ServletContextListener {
             "  sector      VARCHAR(100), cell     VARCHAR(100), village VARCHAR(100)," +
             "  avatar_url  VARCHAR(255), id_number VARCHAR(30)," +
             "  tin_number  VARCHAR(20),  id_card_url VARCHAR(255)," +
-            "  verified      BOOLEAN DEFAULT FALSE," +
-            "  seller_status VARCHAR(20) DEFAULT 'PENDING'," +
+            "  verified    BOOLEAN DEFAULT FALSE," +
             "  active      BOOLEAN DEFAULT TRUE," +
             "  created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP)",
 
