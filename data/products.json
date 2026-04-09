@@ -1,0 +1,44 @@
+[
+  {
+    "id": "1",
+    "title": "Smartphone iPhone 12",
+    "description": "Used iPhone 12 in excellent condition. 128GB storage, great battery life.",
+    "price": 450000,
+    "category": "Electronics",
+    "condition": "used",
+    "stock_quantity": 2,
+    "seller_id": "seller-1",
+    "images": ["https://via.placeholder.com/300x300"],
+    "is_active": true,
+    "views": 156,
+    "created_at": "2024-01-15T10:00:00Z"
+  },
+  {
+    "id": "2", 
+    "title": "Traditional Rwandan Basket",
+    "description": "Handwoven traditional basket made by local artisans. Perfect for home decoration.",
+    "price": 25000,
+    "category": "Arts & Crafts",
+    "condition": "new",
+    "stock_quantity": 10,
+    "seller_id": "seller-2",
+    "images": ["https://via.placeholder.com/300x300"],
+    "is_active": true,
+    "views": 89,
+    "created_at": "2024-01-20T14:30:00Z"
+  },
+  {
+    "id": "3",
+    "title": "Fresh Organic Vegetables",
+    "description": "Fresh organic vegetables from local farms. Tomatoes, carrots, and more.",
+    "price": 5000,
+    "category": "Food",
+    "condition": "new",
+    "stock_quantity": 50,
+    "seller_id": "seller-3",
+    "images": ["https://via.placeholder.com/300x300"],
+    "is_active": true,
+    "views": 234,
+    "created_at": "2024-01-18T09:15:00Z"
+  }
+]
