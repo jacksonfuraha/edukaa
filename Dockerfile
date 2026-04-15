@@ -1,35 +1,25 @@
-# Use Node.js 18 Alpine as base image
-FROM node:18-alpine
-
-# Set working directory
+# ── Stage 1: Build the WAR ───────────────────────────────────────────
+FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
+COPY pom.xml .
+RUN mvn dependency:go-offline -q
+COPY src ./src
+RUN mvn clean package -DskipTests -q
 
-# Create uploads directory
-RUN mkdir -p uploads/videos
+# ── Stage 2: Run on Tomcat ───────────────────────────────────────────
+FROM tomcat:10.1-jdk17
+LABEL maintainer="IDUKA"
 
-# Copy package files
-COPY package*.json ./
-COPY client/package*.json ./client/
+# Remove default apps
+RUN rm -rf /usr/local/tomcat/webapps/*
 
-# Install dependencies
-RUN npm ci --only=production
-RUN cd client && npm ci --only=production
+# Deploy IDUKA as ROOT app
+COPY --from=build /app/target/IDUKA.war /usr/local/tomcat/webapps/ROOT.war
 
-# Copy source code
-COPY . .
+# Upload directories
+RUN mkdir -p /tmp/iduka_uploads/products \
+             /tmp/iduka_uploads/videos \
+             /tmp/iduka_uploads/avatars
 
-# Build the React frontend
-RUN cd client && npm run build
-
-# Set environment to production
-ENV NODE_ENV=production
-
-# Expose port
-EXPOSE 5000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:5000/api/auth/verify || exit 1
-
-# Start the application
-CMD ["npm", "start"]
+EXPOSE 8080
+CMD ["catalina.sh", "run"]
