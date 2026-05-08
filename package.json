@@ -1,0 +1,13 @@
+{
+  "name": "iduka-marketplace",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "install-all": "npm install",
+    "dev": "npm run dev --workspaces",
+    "start": "npm run start --workspaces"
+  }
+}

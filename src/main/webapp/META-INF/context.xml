@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<Context>
-    <!--
-        Files are served by FileServlet.java which handles:
-        - HTTP Range requests for video seeking/streaming
-        - Proper MIME types
-        - Persistent storage at: [user.home]/iduka_uploads/
-    -->
-</Context>

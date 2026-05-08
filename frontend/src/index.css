@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-slate-950 text-slate-100;
+  min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+  @apply outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-slate-950;
+}
+
+.scroll-snap-y {
+  scroll-snap-type: y proximity;
+}
+
+.scroll-snap-child {
+  scroll-snap-align: start;
+}
